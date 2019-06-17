@@ -10,3 +10,4 @@ Các chức năng chính:
 
 # Screenshots
 
+![Alt text](img/intro.gif?raw=true "Intro")
