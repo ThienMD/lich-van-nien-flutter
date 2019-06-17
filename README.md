@@ -9,5 +9,6 @@ Các chức năng chính:
 - Xem lịch tháng.
 
 # Screenshots
-
-![Alt text](img/intro.gif?raw=true "Intro")
+<p align="center">
+  <img src="img/intro.gif" width="350" title="hover text">
+</p>
