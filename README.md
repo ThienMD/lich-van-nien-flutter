@@ -9,4 +9,6 @@ Các chức năng chính:
 - Xem lịch tháng.
 
 # Screenshots
-
+<p align="center">
+  <img src="img/intro.gif" width="350" title="hover text">
+</p>
