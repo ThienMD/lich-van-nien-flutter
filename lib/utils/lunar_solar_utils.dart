@@ -51,6 +51,17 @@ const chiForMonthList = [
   "Tý",
   "Sửu",
 ];
+
+const CAN = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
+const CHI = ['Tý', 'Sửu', 'Dần', 'Mẹo', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
+const TIETKHI = ['Xuân phân', 'Thanh minh', 'Cốc vũ', 'Lập hạ', 'Tiểu mãn', 'Mang chủng',
+'Hạ chí', 'Tiểu thử', 'Đại thử', 'Lập thu', 'Xử thử', 'Bạch lộ',
+'Thu phân', 'Hàn lộ', 'Sương giáng', 'Lập đông', 'Tiểu tuyết', 'Đại tuyết',
+'Đông chí', 'Tiểu hàn', 'Đại hàn', 'Lập xuân', 'Vũ thủy', 'Kinh trập'
+];
+const GIO_HD = ['110100101100', '001101001011', '110011010010', '101100110100', '001011001101', '010010110011'];
+
+
 /* Discard the fractional part of a number, e.g., INT(3.2) = 3 */
 INT(double d) {
   return d.toInt();
@@ -298,4 +309,59 @@ getCanChiMonth(int month, int year) {
     indexCan = 4;
   }
   return '${canList[(indexCan + month - 1) % 10]} ${chi}';
+}
+
+// getDayName(lunarDate) {
+//  if (lunarDate.day == 0) {
+//    return "";
+//  }
+//  var cc = getCanChi(lunarDate);
+//  var s = "Ngày " + cc[0] +", tháng "+cc[1] + ", năm " + cc[2];
+//  return s;
+//}
+
+ getYearCanChi(year) {
+  return CAN[(year+6) % 10] + " " + CHI[(year+8) % 12];
+}
+
+getCanHour(jdn) {
+  return CAN[(jdn - 1) * 2 % 10];
+}
+
+ getCanDay(jdn) {
+  var dayName, monthName, yearName;
+  dayName = CAN[(jdn + 9) % 10] + " " + CHI[(jdn+1)%12];
+  return dayName;
+}
+
+jdn(dd, mm, yy) {
+  var a = INT((14 - mm) / 12);
+  var y = yy+4800-a;
+  var m = mm+12*a-3;
+  var jd = dd + INT((153*m+2)/5) + 365*y + INT(y/4) - INT(y/100) + INT(y/400) - 32045;
+  return jd;
+}
+
+getGioHoangDao(jd) {
+  var chiOfDay = (jd+1) % 12;
+  var gioHD = GIO_HD[chiOfDay % 6]; // same values for Ty' (1) and Ngo. (6), for Suu and Mui etc.
+  var ret = "";
+  var count = 0;
+  for (var i = 0; i < 12; i++) {
+    if (gioHD.substring(i, i + 1) == '1') {
+      ret += CHI[i];
+      ret += ' (${{(i*2+23)%24}}-${{(i*2+1)%24}})';
+      if (count++ < 5) ret += ', ';
+      if (count == 3) ret += '\n';
+    }
+  }
+  return ret;
+}
+
+getTietKhi(jd) {
+  return TIETKHI[getSunLongitude(jd + 1, 7.0)];
+}
+
+getBeginHour(jdn) {
+  return CAN[(jdn - 1) * 2 % 10] + ' ' +  CHI[0];
 }

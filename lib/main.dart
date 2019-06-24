@@ -46,7 +46,6 @@ class _MyHomePageState extends State<MyHomePage> {
   final List<Widget> tabs = [
     SingleDayContainer(),
     MonthContainer(),
-    ConvertContainer(),
     InfoContainer()
   ];
 
@@ -84,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         title: "Tháng",
                         image: "assets/calendar_month.png"),
                     TabItemData(
-                        index: 3, title: "Mở rộng", image: "assets/menu.png")
+                        index: 2, title: "Mở rộng", image: "assets/menu.png")
                   ],
                 )
               ],

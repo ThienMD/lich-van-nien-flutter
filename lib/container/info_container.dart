@@ -10,12 +10,8 @@ class InfoContainer extends StatefulWidget {
 }
 
 class _InfoContainerState extends State<InfoContainer> {
-  var version = "";
-  var buildNumber = "";
-  var textStyle =
-      TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20);
-  var versionStyle =
-  TextStyle(color: Colors.white, fontSize: 15);
+  var _version = "";
+  var _buildNumber = "";
 
   @override
   void initState() {
@@ -26,6 +22,9 @@ class _InfoContainerState extends State<InfoContainer> {
 
   @override
   Widget build(BuildContext context) {
+    var textStyle = TextStyle(
+        color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20);
+    var versionStyle = TextStyle(color: Colors.white, fontSize: 15);
 
     return Container(
       decoration: BoxDecoration(
@@ -54,14 +53,14 @@ class _InfoContainerState extends State<InfoContainer> {
           Padding(
             padding: const EdgeInsets.only(top: 15),
             child: Text(
-              'Version: ${version}',
+              'Version: ${_version}',
               style: versionStyle,
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(top: 15),
             child: Text(
-              'Build: ${buildNumber}',
+              'Build: ${_buildNumber}',
               style: versionStyle,
             ),
           ),
@@ -70,9 +69,8 @@ class _InfoContainerState extends State<InfoContainer> {
             child: Align(
                 alignment: Alignment.bottomRight,
                 child: Padding(
-                  padding: EdgeInsets.only(bottom: 70, right: 10),
-                    child: Text("Developed by ThienMD")
-                )),
+                    padding: EdgeInsets.only(bottom: 70, right: 10),
+                    child: Text("Developed by ThienMD"))),
           )
         ],
       ),
@@ -82,8 +80,8 @@ class _InfoContainerState extends State<InfoContainer> {
   Future<void> getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     setState(() {
-      buildNumber = packageInfo.buildNumber;
-      version = packageInfo.version;
+      _buildNumber = packageInfo.buildNumber;
+      _version = packageInfo.version;
     });
   }
 }

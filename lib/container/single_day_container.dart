@@ -32,6 +32,7 @@ class _SingleDayContainerState extends State<SingleDayContainer>
     //_animation
     _controller = AnimationController(
         duration: const Duration(milliseconds: 300), vsync: this);
+    _controller.value = 0.8;
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
     //timer update datetime
@@ -59,7 +60,7 @@ class _SingleDayContainerState extends State<SingleDayContainer>
   }
 
   _onSwipeLeft() {
-    _controller.value = 0.0;
+    _controller.value = 0.8;
     _controller.forward();
     setState(() {
       _selectedDate = decreaseDay(_selectedDate);
@@ -67,7 +68,7 @@ class _SingleDayContainerState extends State<SingleDayContainer>
   }
 
   _onSwipeRight() {
-    _controller.value = 0.0;
+    _controller.value = 0.8;
     _controller.forward();
     setState(() {
       _selectedDate = increaseDay(_selectedDate);
@@ -246,6 +247,17 @@ class _SingleDayContainerState extends State<SingleDayContainer>
     var lunarMonth = lunarDates[1];
     var lunarYear = lunarDates[2];
     var lunarMonthName = getCanChiMonth(lunarMonth, lunarYear);
+
+    //get day and hour by can chi
+    var jd = jdn(_selectedDate.day, _selectedDate.month, _selectedDate.year);
+    var dayName = getCanDay(jd);
+//    print('day name is ${{dayName}}');
+    var beginHourName = getBeginHour(jd);
+//    print('hourName is ${{hourName}}');
+//    var hoangDaoHour = getGioHoangDao(jd);
+//    print('hoangDaoHour is ${{hoangDaoHour}}');
+//    var tietKhi = getTietKhi(jd);
+//    print('tietKhi is ${{tietKhi}}');
     return Container(
       height: 120,
       color: Colors.black.withOpacity(0.3),
@@ -258,9 +270,9 @@ class _SingleDayContainerState extends State<SingleDayContainer>
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    Text("Giờ", style: headerStyle),
+                    Text("Giờ đầu", style: headerStyle),
                     Text(hourMinute, style: bodyStyle),
-//                    Text("Nhâm Thân", style: bottomStyle),
+                    Text(beginHourName, style: bottomStyle),
                   ],
                 ),
                 true),
@@ -271,7 +283,7 @@ class _SingleDayContainerState extends State<SingleDayContainer>
                   children: <Widget>[
                     Text("Ngày", style: headerStyle),
                     Text(lunarDay.toString(), style: dayStyle),
-//                    Text("Giáp Tý", style: bottomStyle),
+                    Text(dayName, style: bottomStyle),
                   ],
                 ),
                 true),
