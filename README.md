@@ -1,8 +1,8 @@
 # Lịch vạn niên Flutter
 
-### Application is built by Flutter
+Application is built by Flutter
 
-### LỊCH VẠN NIÊN 2019 allow you view an information about lunar calendar and other informations
+LỊCH VẠN NIÊN 2019 allow you view an information about lunar calendar and other informations
 
 ### [Demo link](https://lichvannien.herokuapp.com/)
 
