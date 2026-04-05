@@ -13,9 +13,15 @@ class SingleDayContainer extends StatefulWidget {
   const SingleDayContainer({
     super.key,
     required this.useGlassTheme,
+    required this.selectedDate,
+    this.onSelectedDateChanged,
+    this.onOpenAiTab,
   });
 
   final bool useGlassTheme;
+  final DateTime selectedDate;
+  final ValueChanged<DateTime>? onSelectedDateChanged;
+  final VoidCallback? onOpenAiTab;
 
   @override
   State<SingleDayContainer> createState() => _SingleDayContainerState();
@@ -28,10 +34,12 @@ class _SingleDayContainerState extends State<SingleDayContainer>
   Timer? _timer;
   late final AnimationController _controller;
   late final Animation<double> _animation;
+  int _swipeDirection = 1;
 
   @override
   void initState() {
     super.initState();
+    _selectedDate = widget.selectedDate;
     _getData();
     _controller = AnimationController(
       duration: const Duration(milliseconds: 280),
@@ -57,6 +65,14 @@ class _SingleDayContainerState extends State<SingleDayContainer>
   }
 
   @override
+  void didUpdateWidget(covariant SingleDayContainer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedDate != oldWidget.selectedDate && widget.selectedDate != _selectedDate) {
+      _selectedDate = widget.selectedDate;
+    }
+  }
+
+  @override
   void dispose() {
     _timer?.cancel();
     _controller.dispose();
@@ -78,18 +94,36 @@ class _SingleDayContainerState extends State<SingleDayContainer>
     _controller.forward(from: 0.86);
   }
 
-  void _goToPreviousDay() {
-    _replayAnimation();
+  void _setSelectedDate(
+    DateTime nextDate, {
+    bool replay = false,
+    int direction = 0,
+  }) {
+    if (replay) {
+      _replayAnimation();
+    }
+
     setState(() {
-      _selectedDate = decreaseDay(_selectedDate);
+      _swipeDirection = direction;
+      _selectedDate = nextDate;
     });
+    widget.onSelectedDateChanged?.call(nextDate);
+  }
+
+  void _goToPreviousDay() {
+    _setSelectedDate(
+      decreaseDay(_selectedDate),
+      replay: true,
+      direction: -1,
+    );
   }
 
   void _goToNextDay() {
-    _replayAnimation();
-    setState(() {
-      _selectedDate = increaseDay(_selectedDate);
-    });
+    _setSelectedDate(
+      increaseDay(_selectedDate),
+      replay: true,
+      direction: 1,
+    );
   }
 
   Future<void> _showDatePicker(BuildContext context) async {
@@ -104,15 +138,15 @@ class _SingleDayContainerState extends State<SingleDayContainer>
       return;
     }
 
-    setState(() {
-      _selectedDate = DateTime(
+    _setSelectedDate(
+      DateTime(
         picked.year,
         picked.month,
         picked.day,
         _selectedDate.hour,
         _selectedDate.minute,
-      );
-    });
+      ),
+    );
   }
 
   Widget _buildActionButtons(BuildContext context, {required bool onImage}) {
@@ -132,11 +166,7 @@ class _SingleDayContainerState extends State<SingleDayContainer>
       runSpacing: 10,
       children: <Widget>[
         FilledButton.tonal(
-          onPressed: () {
-            setState(() {
-              _selectedDate = DateTime.now();
-            });
-          },
+          onPressed: () => _setSelectedDate(DateTime.now()),
           style: FilledButton.styleFrom(
             backgroundColor: backgroundColor,
             foregroundColor: foregroundColor,
@@ -154,17 +184,221 @@ class _SingleDayContainerState extends State<SingleDayContainer>
     );
   }
 
-  Widget _buildHeaderOverlay(BuildContext context, {required bool compact, required double maxWidth}) {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Padding(
-        padding: EdgeInsets.only(top: compact ? 16 : 22),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxWidth),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _buildActionButtons(context, onImage: true),
+  String _formatDateChip(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
+  }
+
+  String _lunarYearName(int lunarYear) {
+    return '${CAN[(lunarYear + 6) % 10]} ${CHI[(lunarYear + 8) % 12]}';
+  }
+
+  static const Map<String, String> _zodiacEmoji = <String, String>{
+    'Tý': '🐭',
+    'Sửu': '🐮',
+    'Dần': '🐯',
+    'Mão': '🐱',
+    'Thìn': '🐲',
+    'Tỵ': '🐍',
+    'Ngọ': '🐴',
+    'Mùi': '🐐',
+    'Thân': '🐵',
+    'Dậu': '🐔',
+    'Tuất': '🐶',
+    'Hợi': '🐷',
+  };
+
+  String _animalFromCanChi(String canChiValue) {
+    final parts = canChiValue.trim().split(RegExp(r'\s+'));
+    return parts.isNotEmpty ? parts.last : canChiValue;
+  }
+
+  String _animalDisplay(String canChiValue) {
+    final animal = _animalFromCanChi(canChiValue);
+    return '${_zodiacEmoji[animal] ?? '✨'} $animal';
+  }
+
+  Widget _buildProfileHeader(BuildContext context) {
+    final chipText = _formatDateChip(_selectedDate);
+
+    return Column(
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            FilledButton.tonal(
+              onPressed: () => _setSelectedDate(DateTime.now()),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.78),
+                foregroundColor: const Color(0xFF22252E),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text(
+                'Hôm nay',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _showDatePicker(context),
+                  borderRadius: BorderRadius.circular(18),
+                  child: Ink(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.70),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            'Ngày $chipText',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  color: const Color(0xFF22252E),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                        const Icon(Icons.expand_more_rounded, color: Color(0xFF5B6473)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: widget.onOpenAiTab,
+                borderRadius: BorderRadius.circular(18),
+                child: Ink(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF693B),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: const <BoxShadow>[
+                      BoxShadow(
+                        color: Color(0x33FF693B),
+                        blurRadius: 16,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaperQuoteCard(BuildContext context, QuoteVO quote) {
+    final safeQuote = quote.content.isEmpty ? 'Mỗi ngày là một cơ hội mới để sống nhẹ nhàng và sáng rõ hơn.' : quote.content;
+    final safeAuthor = quote.author.isEmpty ? 'Lịch Vạn Niên' : quote.author;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.86),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Icon(Icons.format_quote_rounded, size: 42, color: Color(0x22000000)),
+          Text(
+            safeQuote,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: const Color(0xFF1B1B1F),
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
+                ),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              safeAuthor,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: const Color(0xFF8A8A94),
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaperFactTile({
+    required String label,
+    required String value,
+    required String caption,
+    bool emphasize = false,
+    bool showDivider = true,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border(
+            right: BorderSide(
+              color: showDivider ? const Color(0x14000000) : Colors.transparent,
+            ),
+          ),
+        ),
+        child: Column(
+          children: <Widget>[
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF7A7A80),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 10),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: emphasize ? const Color(0xFF22B32E) : const Color(0xFF111827),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 22,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              caption,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF303543),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -503,61 +737,127 @@ class _SingleDayContainerState extends State<SingleDayContainer>
   }
 
   Widget _buildMobileLayout(BuildContext context, QuoteVO quote, String dayOfWeek) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final isCompact = constraints.maxHeight < 680;
-        final maxWidth = 760.0;
+    final lunarDates = convertSolar2Lunar(
+      _selectedDate.day,
+      _selectedDate.month,
+      _selectedDate.year,
+      7,
+    );
+    final lunarDay = lunarDates[0] as int;
+    final lunarMonth = lunarDates[1] as int;
+    final lunarYear = lunarDates[2] as int;
+    final jd = jdn(_selectedDate.day, _selectedDate.month, _selectedDate.year);
+    final dayName = getCanDay(jd);
+    final lunarMonthName = getCanChiMonth(lunarMonth, lunarYear);
+    final yearName = _lunarYearName(lunarYear);
+    final dayAnimal = _animalDisplay(dayName);
+    final monthAnimal = _animalDisplay(lunarMonthName);
+    final yearAnimal = _animalDisplay(yearName);
+    final monthLabel = 'Tháng ${_selectedDate.month}, ${_selectedDate.year}';
 
-        return Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Column(
-                children: <Widget>[
-                  SizedBox(height: isCompact ? 72 : 94),
-                  StrokeText(
-                    _selectedDate.day.toString(),
-                    strokeWidth: 0,
-                    fontSize: isCompact ? 96 : 118,
-                    color: Colors.white,
-                    strokeColor: Colors.white,
-                  ),
-                  Text(
-                    dayOfWeek,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: isCompact ? 24 : 28,
-                    ),
-                  ),
-                  SizedBox(height: isCompact ? 4 : 6),
-                  const Text(
-                    'Vuốt trái/phải để đổi ngày',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  SizedBox(height: isCompact ? 12 : 18),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _buildQuoteCard(
-                          context,
-                          quote,
-                          onLightSurface: false,
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            12,
+            MediaQuery.of(context).padding.top + 4,
+            12,
+            MediaQuery.of(context).padding.bottom + 64,
+          ),
+          child: Column(
+            children: <Widget>[
+              _buildProfileHeader(context),
+              const SizedBox(height: 12),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: <Widget>[
+                      Text(
+                        _selectedDate.day.toString(),
+                        style: const TextStyle(
+                          fontSize: 148,
+                          height: 0.95,
+                          color: Color(0xFF22B32E),
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 4),
+                      const Icon(Icons.spa_rounded, color: Color(0xFFFF7A9C), size: 30),
+                      const SizedBox(height: 4),
+                      Text(
+                        dayOfWeek,
+                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                              color: const Color(0xFF111827),
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        monthLabel,
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              color: const Color(0xFF303543),
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Vuốt trái / phải để đổi ngày',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF6B7280),
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      const SizedBox(height: 14),
+                      _buildPaperQuoteCard(context, quote),
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.88),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+                          boxShadow: <BoxShadow>[
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 18,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: <Widget>[
+                            _buildPaperFactTile(
+                              label: 'Ngày',
+                              value: dayAnimal,
+                              caption: 'Âm $lunarDay • $dayName',
+                              emphasize: true,
+                            ),
+                            _buildPaperFactTile(
+                              label: 'Tháng',
+                              value: monthAnimal,
+                              caption: 'Tháng $lunarMonth • $lunarMonthName',
+                            ),
+                            _buildPaperFactTile(
+                              label: 'Năm',
+                              value: yearAnimal,
+                              caption: 'Năm $lunarYear • $yearName',
+                              showDivider: false,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  _buildDateInfo(context, onLightSurface: false),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -572,63 +872,100 @@ class _SingleDayContainerState extends State<SingleDayContainer>
       child: SwipeDetector(
         onSwipeLeft: _goToNextDay,
         onSwipeRight: _goToPreviousDay,
-        child: FadeTransition(
-          opacity: _animation,
-          child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              final isWide = constraints.maxWidth >= 980;
-              final isCompact = constraints.maxHeight < 680;
-              final maxWidth = isWide ? 1280.0 : 760.0;
-
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.985, end: 1.0).animate(_animation),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 340),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
               return Stack(
                 fit: StackFit.expand,
                 children: <Widget>[
-                  Positioned.fill(
-                    child: Image.asset(
-                      'assets/image_${backgroundIndex + 1}.jpg',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: widget.useGlassTheme
-                              ? <Color>[
-                                  Colors.white.withValues(alpha: 0.02),
-                                  Colors.black.withValues(alpha: 0.10),
-                                ]
-                              : <Color>[
-                                  Colors.white.withValues(alpha: 0.62),
-                                  const Color(0xFFEFF4FB).withValues(alpha: 0.92),
-                                ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (isWide)
-                    _buildDesktopLayout(
-                      context,
-                      quote,
-                      dayOfWeek,
-                      backgroundIndex,
-                      constraints,
-                    )
-                  else
-                    _buildMobileLayout(context, quote, dayOfWeek),
-                  if (!isWide)
-                    Positioned.fill(
-                      child: _buildHeaderOverlay(
-                        context,
-                        compact: isCompact,
-                        maxWidth: maxWidth,
-                      ),
-                    ),
+                  ...previousChildren,
+                  if (currentChild != null) currentChild,
                 ],
               );
             },
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              final curved = CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+                reverseCurve: Curves.easeInCubic,
+              );
+              final horizontalOffset = _swipeDirection == 0
+                  ? 0.0
+                  : (_swipeDirection > 0 ? 0.12 : -0.12);
+
+              return ClipRect(
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: Offset(horizontalOffset, 0),
+                    end: Offset.zero,
+                  ).animate(curved),
+                  child: FadeTransition(
+                    opacity: curved,
+                    child: child,
+                  ),
+                ),
+              );
+            },
+            child: LayoutBuilder(
+              key: ValueKey<String>(
+                '${_selectedDate.year}-${_selectedDate.month}-${_selectedDate.day}',
+              ),
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final isWide = constraints.maxWidth >= 980;
+
+                return Stack(
+                  fit: StackFit.expand,
+                  children: <Widget>[
+                    Positioned.fill(
+                      child: Image.asset(
+                        'assets/image_${backgroundIndex + 1}.jpg',
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                        filterQuality: FilterQuality.high,
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: isWide
+                                ? (widget.useGlassTheme
+                                    ? <Color>[
+                                        Colors.white.withValues(alpha: 0.02),
+                                        Colors.black.withValues(alpha: 0.10),
+                                      ]
+                                    : <Color>[
+                                        Colors.white.withValues(alpha: 0.42),
+                                        const Color(0xFFEFF4FB).withValues(alpha: 0.78),
+                                      ])
+                                : <Color>[
+                                    const Color(0xFFF9F5EA).withValues(alpha: 0.80),
+                                    const Color(0xFFF2F5EF).withValues(alpha: 0.88),
+                                  ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (isWide)
+                      _buildDesktopLayout(
+                        context,
+                        quote,
+                        dayOfWeek,
+                        backgroundIndex,
+                        constraints,
+                      )
+                    else
+                      _buildMobileLayout(context, quote, dayOfWeek),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),

@@ -1,3 +1,6 @@
+import 'dart:ui';
+
+import 'package:calendar/container/horoscope_container.dart';
 import 'package:calendar/container/info_container.dart';
 import 'package:calendar/container/month_container.dart';
 import 'package:calendar/container/single_day_container.dart';
@@ -21,6 +24,8 @@ class _MyAppState extends State<MyApp> {
       seedColor: const Color(0xFF2B6CF6),
       brightness: brightness,
     );
+    final navSelectedColor = useGlassTheme ? const Color(0xFF2D5BDB) : colorScheme.primary;
+    const navUnselectedColor = Color(0xFF6B7280);
 
     return ThemeData(
       useMaterial3: true,
@@ -35,25 +40,39 @@ class _MyAppState extends State<MyApp> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: useGlassTheme
-            ? Colors.white.withValues(alpha: 0.62)
-            : Colors.white.withValues(alpha: 0.94),
-        indicatorColor: useGlassTheme
-            ? const Color(0x262B6CF6)
-            : colorScheme.secondaryContainer,
+        backgroundColor: Colors.transparent,
+        indicatorColor: navSelectedColor.withValues(alpha: useGlassTheme ? 0.18 : 0.12),
+        elevation: 0,
+        iconTheme: WidgetStateProperty.resolveWith<IconThemeData?>((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: selected ? navSelectedColor : navUnselectedColor,
+            size: selected ? 25 : 23,
+          );
+        }),
         labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>((states) {
+          final selected = states.contains(WidgetState.selected);
           return TextStyle(
             fontSize: 12,
-            fontWeight: states.contains(WidgetState.selected)
-                ? FontWeight.w700
-                : FontWeight.w500,
+            color: selected ? const Color(0xFF111827) : navUnselectedColor,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
           );
         }),
       ),
       navigationRailTheme: NavigationRailThemeData(
-        indicatorColor: useGlassTheme
-            ? const Color(0x262B6CF6)
-            : colorScheme.secondaryContainer,
+        backgroundColor: Colors.transparent,
+        useIndicator: true,
+        indicatorColor: navSelectedColor.withValues(alpha: useGlassTheme ? 0.18 : 0.12),
+        selectedIconTheme: IconThemeData(color: navSelectedColor, size: 25),
+        unselectedIconTheme: const IconThemeData(color: navUnselectedColor, size: 23),
+        selectedLabelTextStyle: const TextStyle(
+          color: Color(0xFF111827),
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelTextStyle: const TextStyle(
+          color: navUnselectedColor,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -94,10 +113,30 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _currentIndex = 0;
+  DateTime _selectedDate = DateTime.now();
+
+  void _handleSelectedDateChanged(DateTime date) {
+    setState(() {
+      _selectedDate = date;
+    });
+  }
 
   List<Widget> get _tabs => <Widget>[
-        SingleDayContainer(useGlassTheme: widget.useGlassTheme),
+        SingleDayContainer(
+          useGlassTheme: widget.useGlassTheme,
+          selectedDate: _selectedDate,
+          onSelectedDateChanged: _handleSelectedDateChanged,
+          onOpenAiTab: () {
+            setState(() {
+              _currentIndex = 2;
+            });
+          },
+        ),
         MonthContainer(useGlassTheme: widget.useGlassTheme),
+        HoroscopeContainer(
+          selectedDate: _selectedDate,
+          useGlassTheme: widget.useGlassTheme,
+        ),
         InfoContainer(
           useGlassTheme: widget.useGlassTheme,
           onThemeModeChanged: widget.onThemeModeChanged,
@@ -121,6 +160,11 @@ class _MyHomePageState extends State<MyHomePage> {
         label: Text('Tháng'),
       ),
       NavigationRailDestination(
+        icon: Icon(Icons.auto_awesome_outlined),
+        selectedIcon: Icon(Icons.auto_awesome_rounded),
+        label: Text('Tử vi'),
+      ),
+      NavigationRailDestination(
         icon: Icon(Icons.info_outline_rounded),
         selectedIcon: Icon(Icons.info_rounded),
         label: Text('Thông tin'),
@@ -139,6 +183,11 @@ class _MyHomePageState extends State<MyHomePage> {
         label: 'Tháng',
       ),
       NavigationDestination(
+        icon: Icon(Icons.auto_awesome_outlined),
+        selectedIcon: Icon(Icons.auto_awesome_rounded),
+        label: 'Tử vi',
+      ),
+      NavigationDestination(
         icon: Icon(Icons.info_outline_rounded),
         selectedIcon: Icon(Icons.info_rounded),
         label: 'Thông tin',
@@ -151,7 +200,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     final mobileContent = IndexedStack(
-      index: _currentIndex > 2 ? 2 : _currentIndex,
+      index: _currentIndex,
       children: _tabs,
     );
 
@@ -167,18 +216,41 @@ class _MyHomePageState extends State<MyHomePage> {
                     padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(24),
-                      child: NavigationRail(
-                        selectedIndex: _currentIndex,
-                        onDestinationSelected: (int index) {
-                          setState(() {
-                            _currentIndex = index;
-                          });
-                        },
-                        labelType: NavigationRailLabelType.all,
-                        backgroundColor: widget.useGlassTheme
-                            ? Colors.white.withValues(alpha: 0.72)
-                            : Colors.white,
-                        destinations: destinations,
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: widget.useGlassTheme
+                                ? const Color(0xDFFAFBFF)
+                                : Colors.white.withValues(alpha: 0.96),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: widget.useGlassTheme
+                                  ? Colors.white.withValues(alpha: 0.42)
+                                  : const Color(0xFFE5E7EB),
+                            ),
+                            boxShadow: <BoxShadow>[
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 24,
+                                offset: const Offset(0, 12),
+                              ),
+                            ],
+                          ),
+                          child: NavigationRail(
+                            selectedIndex: _currentIndex,
+                            onDestinationSelected: (int index) {
+                              setState(() {
+                                _currentIndex = index;
+                              });
+                            },
+                            labelType: NavigationRailLabelType.all,
+                            backgroundColor: Colors.transparent,
+                            minWidth: 88,
+                            minExtendedWidth: 96,
+                            destinations: destinations,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -192,21 +264,42 @@ class _MyHomePageState extends State<MyHomePage> {
               minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(22),
-                child: NavigationBar(
-                  selectedIndex: _currentIndex > 2 ? 2 : _currentIndex,
-                  backgroundColor: widget.useGlassTheme
-                      ? Colors.white.withValues(alpha: 0.22)
-                      : Colors.white.withValues(alpha: 0.94),
-                  indicatorColor: widget.useGlassTheme
-                      ? const Color(0x332B6CF6)
-                      : Theme.of(context).colorScheme.secondaryContainer,
-                  elevation: 0,
-                  onDestinationSelected: (int index) {
-                    setState(() {
-                      _currentIndex = index;
-                    });
-                  },
-                  destinations: mobileDestinations,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: widget.useGlassTheme
+                          ? const Color(0xDFFAFBFF)
+                          : Colors.white.withValues(alpha: 0.96),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: widget.useGlassTheme
+                            ? Colors.white.withValues(alpha: 0.40)
+                            : const Color(0xFFE5E7EB),
+                      ),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 22,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: NavigationBar(
+                      selectedIndex: _currentIndex,
+                      backgroundColor: Colors.transparent,
+                      indicatorColor: widget.useGlassTheme
+                          ? const Color(0x332B6CF6)
+                          : Theme.of(context).colorScheme.secondaryContainer,
+                      elevation: 0,
+                      onDestinationSelected: (int index) {
+                        setState(() {
+                          _currentIndex = index;
+                        });
+                      },
+                      destinations: mobileDestinations,
+                    ),
+                  ),
                 ),
               ),
             ),

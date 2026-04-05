@@ -17,7 +17,8 @@ class SwipeDetector extends StatefulWidget {
 }
 
 class _SwipeDetectorState extends State<SwipeDetector> {
-  static const double _triggerOffset = 32;
+  static const double _triggerOffset = 24;
+  static const double _triggerVelocity = 280;
   double _initialDrag = 0;
   double _distanceDrag = 0;
 
@@ -32,10 +33,11 @@ class _SwipeDetectorState extends State<SwipeDetector> {
       onPanUpdate: (DragUpdateDetails details) {
         _distanceDrag = details.globalPosition.dx - _initialDrag;
       },
-      onPanEnd: (_) {
-        if (_distanceDrag <= -_triggerOffset) {
+      onPanEnd: (DragEndDetails details) {
+        final velocity = details.velocity.pixelsPerSecond.dx;
+        if (_distanceDrag <= -_triggerOffset || velocity <= -_triggerVelocity) {
           widget.onSwipeLeft?.call();
-        } else if (_distanceDrag >= _triggerOffset) {
+        } else if (_distanceDrag >= _triggerOffset || velocity >= _triggerVelocity) {
           widget.onSwipeRight?.call();
         }
         _initialDrag = 0;

@@ -10,7 +10,9 @@ void main() {
 
     expect(find.text('Ngày'), findsWidgets);
     expect(find.text('Tháng'), findsWidgets);
+    expect(find.text('Tử vi'), findsOneWidget);
     expect(find.text('Thông tin'), findsOneWidget);
+    expect(find.text('Hôm nay'), findsOneWidget);
   });
 
   testWidgets('month view renders without layout overflow on compact screens', (
@@ -53,6 +55,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Chế độ giao diện'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('AI tử vi is available as a dedicated bottom tab', (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tử vi').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Thỉnh thầy tử vi'), findsOneWidget);
+    expect(find.text('Nhập câu hỏi tử vi của bạn...'), findsOneWidget);
+    expect(find.textContaining('Ngày sinh'), findsWidgets);
+    expect(find.textContaining('Preview mode'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }

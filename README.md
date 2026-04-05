@@ -23,6 +23,22 @@ flutter create --org com.pitayaa .
  $ flutter build web
 ```
 
+### DeepSeek setup
+
+1. Copy the example env file:
+
+```bash
+cp .env.example .env
+```
+
+2. Add your DeepSeek key to `.env`.
+
+3. Run the app with the env file:
+
+```bash
+flutter run -d chrome --dart-define-from-file=.env
+```
+
 ### Run on Desktop
 
 ```

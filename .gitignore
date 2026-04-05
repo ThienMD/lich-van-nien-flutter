@@ -27,6 +27,8 @@
 .pub/
 /build/
 /deploy/
+.env
+.env.local
 
 # Android related
 **/android/**/gradle-wrapper.jar
