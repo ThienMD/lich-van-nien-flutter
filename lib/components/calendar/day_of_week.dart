@@ -21,7 +21,7 @@ class DayOfWeek extends StatelessWidget {
           title.toUpperCase(),
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: DOW_TEXT_SIZE,
+            fontSize: dowTextSize,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.4,

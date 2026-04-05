@@ -1,18 +1,18 @@
 DateTime firstDayOfWeek(DateTime date) {
   int weekDay = date.weekday - 1;
-  return date.subtract(new Duration(days: weekDay));
+  return date.subtract(Duration(days: weekDay));
 }
 
 DateTime endDayOfWeek(DateTime date) {
   int weekDay = 7 - date.weekday;
-  return date.add(new Duration(days: weekDay));
+  return date.add(Duration(days: weekDay));
 }
 
 DateTime lastDayOfMonth(DateTime date) {
   if (date.month < 12) {
-    return new DateTime(date.year, date.month + 1, 0);
+    return DateTime(date.year, date.month + 1, 0);
   }
-  return new DateTime(date.year + 1, 1, 0);
+  return DateTime(date.year + 1, 1, 0);
 }
 
 DateTime lastDayOfPreviousMonth(DateTime date) {
@@ -28,7 +28,7 @@ DateTime increaseMonth(DateTime date) {
   } else {
     month++;
   }
-  return new DateTime(year, month, 1);
+  return DateTime(year, month, 1);
 }
 
 DateTime decreaseMonth(DateTime date) {
@@ -40,7 +40,7 @@ DateTime decreaseMonth(DateTime date) {
   } else {
     month--;
   }
-  return new DateTime(year, month, 1);
+  return DateTime(year, month, 1);
 }
 
 bool isOtherMonth(DateTime date, DateTime currentMonth) {

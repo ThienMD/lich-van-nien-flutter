@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:calendar/model/EventVO.dart';
-import 'package:calendar/model/QuoteVO.dart';
+import 'package:calendar/model/event_vo.dart';
+import 'package:calendar/model/quote_vo.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 Future<String> loadAssets(String name) async {

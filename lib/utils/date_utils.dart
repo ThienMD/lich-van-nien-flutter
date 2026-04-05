@@ -35,7 +35,7 @@ DateTime increaseDay(DateTime date) {
     }
   }
 
-  return new DateTime(year, month, day, date.hour, date.minute, date.second);
+  return DateTime(year, month, day, date.hour, date.minute, date.second);
 }
 
 DateTime decreaseDay(DateTime date) {
@@ -49,17 +49,17 @@ DateTime decreaseDay(DateTime date) {
     year = maxDayPreviousMonth.year;
   }
 
-  return new DateTime(year, month, day, date.hour, date.minute, date.second);
+  return DateTime(year, month, day, date.hour, date.minute, date.second);
 }
 
 DateTime lastDayOfMonth(DateTime date) {
   if (date.month < 12) {
-    return new DateTime(date.year, date.month + 1, 0);
+    return DateTime(date.year, date.month + 1, 0);
   }
-  return new DateTime(date.year + 1, 1, 0);
+  return DateTime(date.year + 1, 1, 0);
 }
 
 DateTime lastDayOfPreviousMonth(DateTime date) {
-  return new DateTime(date.year, date.month, 0);
+  return DateTime(date.year, date.month, 0);
 }
 

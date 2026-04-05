@@ -1,25 +1,36 @@
 import 'dart:async';
 
-import 'package:calendar/components/SelectDateButton.dart';
-import 'package:calendar/components/StrokeText.dart';
-import 'package:calendar/components/SwipeDetector.dart';
-import 'package:calendar/model/QuoteVO.dart';
-import 'package:calendar/services/DataService.dart';
+import 'package:calendar/components/select_date_button.dart';
+import 'package:calendar/components/stroke_text.dart';
+import 'package:calendar/components/swipe_detector.dart';
+import 'package:calendar/model/quote_vo.dart';
+import 'package:calendar/services/data_service.dart';
 import 'package:calendar/utils/date_utils.dart';
 import 'package:calendar/utils/lunar_solar_utils.dart';
 import 'package:flutter/material.dart';
+
+enum ZodiacAnimal { rat, ox, tiger, cat, dragon, snake, horse, goat, monkey, rooster, dog, pig }
+
+extension ZodiacAnimalDisplay on ZodiacAnimal {
+  static const _emojis = ['🐭', '🐮', '🐯', '🐱', '🐲', '🐍', '🐴', '🐐', '🐵', '🐔', '🐶', '🐷'];
+  String get emoji => _emojis[index];
+  // CHI from lunar_solar_utils.dart is the single source of truth for labels
+  String get viLabel => CHI[index];
+}
 
 class SingleDayContainer extends StatefulWidget {
   const SingleDayContainer({
     super.key,
     required this.useGlassTheme,
     required this.selectedDate,
+    this.birthDate,
     this.onSelectedDateChanged,
     this.onOpenAiTab,
   });
 
   final bool useGlassTheme;
   final DateTime selectedDate;
+  final DateTime? birthDate;
   final ValueChanged<DateTime>? onSelectedDateChanged;
   final VoidCallback? onOpenAiTab;
 
@@ -194,108 +205,125 @@ class _SingleDayContainerState extends State<SingleDayContainer>
     return '${CAN[(lunarYear + 6) % 10]} ${CHI[(lunarYear + 8) % 12]}';
   }
 
-  static const Map<String, String> _zodiacEmoji = <String, String>{
-    'Tý': '🐭',
-    'Sửu': '🐮',
-    'Dần': '🐯',
-    'Mão': '🐱',
-    'Thìn': '🐲',
-    'Tỵ': '🐍',
-    'Ngọ': '🐴',
-    'Mùi': '🐐',
-    'Thân': '🐵',
-    'Dậu': '🐔',
-    'Tuất': '🐶',
-    'Hợi': '🐷',
-  };
-
   String _animalFromCanChi(String canChiValue) {
     final parts = canChiValue.trim().split(RegExp(r'\s+'));
     return parts.isNotEmpty ? parts.last : canChiValue;
   }
 
-  String _animalDisplay(String canChiValue) {
-    final animal = _animalFromCanChi(canChiValue);
-    return '${_zodiacEmoji[animal] ?? '✨'} $animal';
+  ZodiacAnimal? _zodiacAnimalFromText(String value) {
+    final idx = CHI.indexOf(value.trim());
+    return idx >= 0 ? ZodiacAnimal.values[idx] : null;
+  }
+
+  String _animalEmoji(String canChiValue) {
+    final raw = _animalFromCanChi(canChiValue);
+    return _zodiacAnimalFromText(raw)?.emoji ?? '✨';
   }
 
   Widget _buildProfileHeader(BuildContext context) {
-    final chipText = _formatDateChip(_selectedDate);
+    final hasBirth = widget.birthDate != null;
+    final String centerText;
+    if (hasBirth) {
+      final bd = widget.birthDate!;
+      final yearName =
+          '${CAN[(bd.year + 6) % 10]} ${CHI[(bd.year + 8) % 12]}';
+      final formatted =
+          '${bd.day.toString().padLeft(2, '0')}/${bd.month.toString().padLeft(2, '0')}/${bd.year}';
+      centerText = '$yearName, $formatted';
+    } else {
+      centerText = 'Ngày ${_formatDateChip(_selectedDate)}';
+    }
 
-    return Column(
+    return Row(
       children: <Widget>[
-        Row(
-          children: <Widget>[
-            FilledButton.tonal(
-              onPressed: () => _setSelectedDate(DateTime.now()),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.78),
-                foregroundColor: const Color(0xFF22252E),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              child: const Text(
-                'Hôm nay',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => _showDatePicker(context),
-                  borderRadius: BorderRadius.circular(18),
-                  child: Ink(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.70),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-                    ),
-                    child: Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: Text(
-                            'Ngày $chipText',
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  color: const Color(0xFF22252E),
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                        ),
-                        const Icon(Icons.expand_more_rounded, color: Color(0xFF5B6473)),
-                      ],
-                    ),
-                  ),
+        GestureDetector(
+          onTap: () => _setSelectedDate(DateTime.now()),
+          child: Container(
+            height: 46,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.85),
+              borderRadius: BorderRadius.circular(23),
+              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(width: 10),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: widget.onOpenAiTab,
-                borderRadius: BorderRadius.circular(18),
-                child: Ink(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF693B),
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: const <BoxShadow>[
-                      BoxShadow(
-                        color: Color(0x33FF693B),
-                        blurRadius: 16,
-                        offset: Offset(0, 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                const Icon(Icons.calendar_today_rounded, color: Color(0xFF5B6473), size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  'Hôm nay',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: const Color(0xFF22252E),
+                        fontWeight: FontWeight.w700,
                       ),
-                    ],
-                  ),
-                  child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
                 ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: GestureDetector(
+            onTap: () => _showDatePicker(context),
+            child: Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.82),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+              ),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      centerText,
+                      textAlign: hasBirth ? TextAlign.center : TextAlign.start,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: const Color(0xFF22252E),
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                  if (!hasBirth)
+                    const Icon(Icons.expand_more_rounded, color: Color(0xFF5B6473)),
+                ],
               ),
             ),
-          ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        GestureDetector(
+          onTap: widget.onOpenAiTab,
+          child: const SizedBox(
+            width: 48,
+            height: 48,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color(0xFFFF693B),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: Color(0x33FF693B),
+                    blurRadius: 16,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(Icons.track_changes_rounded, color: Colors.white),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -307,38 +335,46 @@ class _SingleDayContainerState extends State<SingleDayContainer>
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.86),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.format_quote_rounded, size: 42, color: Color(0x22000000)),
+          const Text(
+            '“',
+            style: TextStyle(
+              fontSize: 44,
+              height: 0.75,
+              color: Color(0x44000000),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           Text(
             safeQuote,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: const Color(0xFF1B1B1F),
-                  fontWeight: FontWeight.w700,
-                  height: 1.35,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
                 ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           Align(
             alignment: Alignment.centerRight,
             child: Text(
               safeAuthor,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: const Color(0xFF8A8A94),
                     fontWeight: FontWeight.w500,
                   ),
@@ -384,7 +420,7 @@ class _SingleDayContainerState extends State<SingleDayContainer>
                 style: TextStyle(
                   color: emphasize ? const Color(0xFF22B32E) : const Color(0xFF111827),
                   fontWeight: FontWeight.w800,
-                  fontSize: 22,
+                  fontSize: 32,
                 ),
               ),
             ),
@@ -750,9 +786,6 @@ class _SingleDayContainerState extends State<SingleDayContainer>
     final dayName = getCanDay(jd);
     final lunarMonthName = getCanChiMonth(lunarMonth, lunarYear);
     final yearName = _lunarYearName(lunarYear);
-    final dayAnimal = _animalDisplay(dayName);
-    final monthAnimal = _animalDisplay(lunarMonthName);
-    final yearAnimal = _animalDisplay(yearName);
     final monthLabel = 'Tháng ${_selectedDate.month}, ${_selectedDate.year}';
 
     return Center(
@@ -832,19 +865,19 @@ class _SingleDayContainerState extends State<SingleDayContainer>
                           children: <Widget>[
                             _buildPaperFactTile(
                               label: 'Ngày',
-                              value: dayAnimal,
-                              caption: 'Âm $lunarDay • $dayName',
+                              value: '$lunarDay',
+                              caption: '${_animalEmoji(dayName)} $dayName',
                               emphasize: true,
                             ),
                             _buildPaperFactTile(
                               label: 'Tháng',
-                              value: monthAnimal,
-                              caption: 'Tháng $lunarMonth • $lunarMonthName',
+                              value: '$lunarMonth',
+                              caption: '${_animalEmoji(lunarMonthName)} $lunarMonthName',
                             ),
                             _buildPaperFactTile(
                               label: 'Năm',
-                              value: yearAnimal,
-                              caption: 'Năm $lunarYear • $yearName',
+                              value: '${_selectedDate.year}',
+                              caption: '${_animalEmoji(yearName)} $yearName',
                               showDivider: false,
                             ),
                           ],

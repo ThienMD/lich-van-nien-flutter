@@ -1,6 +1,5 @@
-import 'dart:ui';
-
 import 'package:calendar/main.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -12,7 +11,7 @@ void main() {
     expect(find.text('Tháng'), findsWidgets);
     expect(find.text('Tử vi'), findsOneWidget);
     expect(find.text('Thông tin'), findsOneWidget);
-    expect(find.text('Hôm nay'), findsOneWidget);
+    expect(find.byIcon(Icons.calendar_today_rounded), findsOneWidget);
   });
 
   testWidgets('month view renders without layout overflow on compact screens', (

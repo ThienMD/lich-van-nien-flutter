@@ -1,7 +1,7 @@
 import 'package:calendar/components/calendar/calendar.dart';
-import 'package:calendar/components/event/EventList.dart';
-import 'package:calendar/model/EventVO.dart';
-import 'package:calendar/services/DataService.dart';
+import 'package:calendar/components/event/event_list.dart';
+import 'package:calendar/model/event_vo.dart';
+import 'package:calendar/services/data_service.dart';
 import 'package:flutter/material.dart';
 
 class MonthContainer extends StatefulWidget {

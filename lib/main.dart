@@ -114,10 +114,17 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _currentIndex = 0;
   DateTime _selectedDate = DateTime.now();
+  DateTime? _birthDate;
 
   void _handleSelectedDateChanged(DateTime date) {
     setState(() {
       _selectedDate = date;
+    });
+  }
+
+  void _handleBirthDateChanged(DateTime? date) {
+    setState(() {
+      _birthDate = date;
     });
   }
 
@@ -126,6 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
           useGlassTheme: widget.useGlassTheme,
           selectedDate: _selectedDate,
           onSelectedDateChanged: _handleSelectedDateChanged,
+          birthDate: _birthDate,
           onOpenAiTab: () {
             setState(() {
               _currentIndex = 2;
@@ -136,6 +144,8 @@ class _MyHomePageState extends State<MyHomePage> {
         HoroscopeContainer(
           selectedDate: _selectedDate,
           useGlassTheme: widget.useGlassTheme,
+          birthDate: _birthDate,
+          onBirthDateChanged: _handleBirthDateChanged,
         ),
         InfoContainer(
           useGlassTheme: widget.useGlassTheme,
@@ -160,8 +170,8 @@ class _MyHomePageState extends State<MyHomePage> {
         label: Text('Tháng'),
       ),
       NavigationRailDestination(
-        icon: Icon(Icons.auto_awesome_outlined),
-        selectedIcon: Icon(Icons.auto_awesome_rounded),
+        icon: Icon(Icons.nights_stay_outlined),
+        selectedIcon: Icon(Icons.nights_stay),
         label: Text('Tử vi'),
       ),
       NavigationRailDestination(
@@ -183,8 +193,8 @@ class _MyHomePageState extends State<MyHomePage> {
         label: 'Tháng',
       ),
       NavigationDestination(
-        icon: Icon(Icons.auto_awesome_outlined),
-        selectedIcon: Icon(Icons.auto_awesome_rounded),
+        icon: Icon(Icons.nights_stay_outlined),
+        selectedIcon: Icon(Icons.nights_stay),
         label: 'Tử vi',
       ),
       NavigationDestination(

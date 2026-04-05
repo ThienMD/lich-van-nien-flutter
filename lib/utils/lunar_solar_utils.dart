@@ -1,3 +1,4 @@
+// ignore_for_file: non_constant_identifier_names, constant_identifier_names, prefer_typing_uninitialized_variables, unnecessary_brace_in_string_interps, prefer_interpolation_to_compose_strings, empty_statements
 /*
  * Copyright (c) 2006 Ho Ngoc Duc. All Rights Reserved.
  * Astronomical algorithms from the book "Astronomical Algorithms" by Jean Meeus, 1998

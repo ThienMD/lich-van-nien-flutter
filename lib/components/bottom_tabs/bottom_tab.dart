@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'TabItem.dart';
-import 'TabItemData.dart';
+import 'tab_item.dart';
+import 'tab_item_data.dart';
 
 class BottomTab extends StatelessWidget {
   const BottomTab({

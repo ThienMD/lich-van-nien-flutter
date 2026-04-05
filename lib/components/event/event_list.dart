@@ -1,5 +1,5 @@
-import 'package:calendar/components/event/EventItem.dart';
-import 'package:calendar/model/EventVO.dart';
+import 'package:calendar/components/event/event_item.dart';
+import 'package:calendar/model/event_vo.dart';
 import 'package:flutter/material.dart';
 
 class EventList extends StatelessWidget {

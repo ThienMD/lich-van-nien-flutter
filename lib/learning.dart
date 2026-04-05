@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class Learning extends StatelessWidget {
+  const Learning({super.key});
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build

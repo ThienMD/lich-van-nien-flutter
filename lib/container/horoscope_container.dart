@@ -1,5 +1,5 @@
-import 'package:calendar/model/HoroscopePromptVO.dart';
-import 'package:calendar/services/DeepSeekService.dart';
+import 'package:calendar/model/horoscope_prompt_vo.dart';
+import 'package:calendar/services/deep_seek_service.dart';
 import 'package:calendar/utils/lunar_solar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
@@ -23,10 +23,14 @@ class HoroscopeContainer extends StatefulWidget {
     super.key,
     required this.selectedDate,
     required this.useGlassTheme,
+    this.birthDate,
+    this.onBirthDateChanged,
   });
 
   final DateTime selectedDate;
   final bool useGlassTheme;
+  final DateTime? birthDate;
+  final ValueChanged<DateTime?>? onBirthDateChanged;
 
   @override
   State<HoroscopeContainer> createState() => _HoroscopeContainerState();
@@ -45,8 +49,8 @@ class _HoroscopeContainerState extends State<HoroscopeContainer> {
   final DeepSeekService _service = DeepSeekService();
   final List<_ChatMessage> _messages = <_ChatMessage>[];
 
-  DateTime? _birthDate;
   bool _isLoading = false;
+  bool _showLoading = false;
 
   @override
   void dispose() {
@@ -62,7 +66,7 @@ class _HoroscopeContainerState extends State<HoroscopeContainer> {
   }
 
   Future<void> _pickBirthDate() async {
-    final initialDate = _birthDate ?? DateTime(1995, 1, 1);
+    final initialDate = widget.birthDate ?? DateTime(1995, 1, 1);
     final picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -74,9 +78,7 @@ class _HoroscopeContainerState extends State<HoroscopeContainer> {
       return;
     }
 
-    setState(() {
-      _birthDate = picked;
-    });
+    widget.onBirthDateChanged?.call(picked);
   }
 
   void _scrollToBottom() {
@@ -104,9 +106,9 @@ class _HoroscopeContainerState extends State<HoroscopeContainer> {
     final lunarYear = lunarDates[2] as int;
     final jd = jdn(widget.selectedDate.day, widget.selectedDate.month, widget.selectedDate.year);
     final yearName = '${CAN[(lunarYear + 6) % 10]} ${CHI[(lunarYear + 8) % 12]}';
-    final birthYearName = _birthDate == null
+    final birthYearName = widget.birthDate == null
         ? null
-        : '${CAN[(_birthDate!.year + 6) % 10]} ${CHI[(_birthDate!.year + 8) % 12]}';
+        : '${CAN[(widget.birthDate!.year + 6) % 10]} ${CHI[(widget.birthDate!.year + 8) % 12]}';
 
     return HoroscopePromptVO(
       solarDate: widget.selectedDate,
@@ -118,7 +120,7 @@ class _HoroscopeContainerState extends State<HoroscopeContainer> {
       beginHour: getBeginHour(jd),
       question: question,
       yearName: yearName,
-      birthDate: _birthDate,
+      birthDate: widget.birthDate,
       birthYearName: birthYearName,
     );
   }
@@ -137,26 +139,62 @@ class _HoroscopeContainerState extends State<HoroscopeContainer> {
           content: trimmed,
         ),
       );
-      _isLoading = true;
-    });
-    _scrollToBottom();
-
-    final answer = await _service.askHoroscope(_buildPrompt(trimmed));
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
       _messages.add(
-        _ChatMessage(
+        const _ChatMessage(
           role: _ChatRole.assistant,
-          content: answer,
+          content: '',
           isMarkdown: true,
         ),
       );
-      _isLoading = false;
+      _isLoading = true;
+      _showLoading = true;
     });
     _scrollToBottom();
+
+    final streamBuffer = StringBuffer();
+    var receivedChunk = false;
+
+    try {
+      await for (final chunk in _service.streamHoroscope(_buildPrompt(trimmed))) {
+        if (!mounted) {
+          return;
+        }
+
+        streamBuffer.write(chunk);
+        receivedChunk = true;
+        setState(() {
+          _messages[_messages.length - 1] = _ChatMessage(
+            role: _ChatRole.assistant,
+            content: streamBuffer.toString(),
+            isMarkdown: true,
+          );
+          _showLoading = false;
+        });
+        _scrollToBottom();
+      }
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        if (!receivedChunk) {
+          _showLoading = false;
+        }
+        _messages[_messages.length - 1] = const _ChatMessage(
+          role: _ChatRole.assistant,
+          content: 'Không thể stream phản hồi DeepSeek lúc này. Vui lòng thử lại.',
+          isMarkdown: true,
+        );
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _showLoading = false;
+        });
+        _scrollToBottom();
+      }
+    }
   }
 
   Widget _buildWelcomeCard(BuildContext context) {
@@ -215,7 +253,7 @@ class _HoroscopeContainerState extends State<HoroscopeContainer> {
     );
 
     return TweenAnimationBuilder<double>(
-      key: ValueKey<String>('${message.role.name}-$index-${message.content}'),
+      key: ValueKey<String>('${message.role.name}-$index'),
       tween: Tween<double>(begin: 0, end: 1),
       duration: const Duration(milliseconds: 240),
       curve: Curves.easeOutCubic,
@@ -333,7 +371,7 @@ class _HoroscopeContainerState extends State<HoroscopeContainer> {
     final subColor = const Color(0xFF6B7280);
     final borderColor = glass ? const Color(0x33FFFFFF) : const Color(0xFFE3DAB8);
     final dateText = _formatDate(widget.selectedDate);
-    final birthDateText = _birthDate == null ? 'Ngày sinh' : 'Ngày sinh: ${_formatDate(_birthDate!)}';
+    final birthDateText = widget.birthDate == null ? 'Ngày sinh' : 'Ngày sinh: ${_formatDate(widget.birthDate!)}';
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -481,7 +519,7 @@ class _HoroscopeContainerState extends State<HoroscopeContainer> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            _birthDate == null
+                            widget.birthDate == null
                                 ? 'Chọn ngày sinh để AI luận giải sát hơn theo bối cảnh cá nhân.'
                                 : 'Đã thêm ngày sinh để cá nhân hoá phần luận giải tử vi.',
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -547,7 +585,7 @@ class _HoroscopeContainerState extends State<HoroscopeContainer> {
                                     _messages.length,
                                     (int index) => _buildMessageBubble(context, _messages[index], index),
                                   ),
-                                  if (_isLoading) _buildTypingBubble(context),
+                                  if (_showLoading) _buildTypingBubble(context),
                                 ],
                               ),
                             ),
@@ -626,7 +664,7 @@ class _HoroscopeContainerState extends State<HoroscopeContainer> {
                                             borderRadius: BorderRadius.circular(16),
                                           ),
                                         ),
-                                        child: _isLoading
+                                        child: _showLoading
                                             ? const SizedBox(
                                                 width: 18,
                                                 height: 18,

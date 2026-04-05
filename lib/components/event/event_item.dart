@@ -1,4 +1,4 @@
-import 'package:calendar/model/EventVO.dart';
+import 'package:calendar/model/event_vo.dart';
 import 'package:calendar/utils/date_utils.dart';
 import 'package:calendar/utils/lunar_solar_utils.dart';
 import 'package:flutter/material.dart';
