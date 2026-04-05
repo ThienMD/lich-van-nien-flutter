@@ -1,40 +1,54 @@
 import 'package:flutter/material.dart';
 
 class SelectDateButton extends StatelessWidget {
-  SelectDateButton({this.title, this.onPress});
+  const SelectDateButton({
+    super.key,
+    required this.title,
+    required this.onPress,
+    this.foregroundColor,
+    this.backgroundColor,
+    this.borderColor,
+  });
 
   final String title;
-  final Function onPress;
+  final VoidCallback onPress;
+  final Color? foregroundColor;
+  final Color? backgroundColor;
+  final Color? borderColor;
+
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    var textStyle = TextStyle(
-      color: Colors.white,
-      fontSize: 17,fontWeight: FontWeight.bold
-    );
-    return GestureDetector(
-      onTap: (){
-        onPress();
-      },
-      child: Container(
-        height: 40,
-        width: 190,
-        padding: EdgeInsets.only(left: 10, right: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-          border: new Border.all(
-              color: Colors.white,
-              width: 1.0,
-              style: BorderStyle.solid
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Center(child: Text(title, style: textStyle)),
-            Icon(Icons.arrow_drop_down, size: 30, color: Colors.white,)
+    final colorScheme = Theme.of(context).colorScheme;
+    final resolvedForeground = foregroundColor ?? colorScheme.onSurface;
+    final resolvedBackground = backgroundColor ?? colorScheme.surfaceContainerHighest;
+    final resolvedBorder = borderColor ?? colorScheme.outlineVariant;
 
-          ],
+    final textStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
+          color: resolvedForeground,
+          fontWeight: FontWeight.w700,
+        );
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPress,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            color: resolvedBackground,
+            border: Border.all(color: resolvedBorder),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(title, style: textStyle),
+              const SizedBox(width: 4),
+              Icon(Icons.arrow_drop_down, size: 24, color: resolvedForeground),
+            ],
+          ),
         ),
       ),
     );

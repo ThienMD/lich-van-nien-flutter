@@ -1,7 +1,6 @@
 class QuoteVO {
-  QuoteVO( this.content, this.author);
+  const QuoteVO(this.content, this.author);
 
-  String content;
-  String author;
-
+  final String content;
+  final String author;
 }

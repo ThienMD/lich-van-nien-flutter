@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:calendar/components/calendar/constants.dart';
 
 class Dot extends StatelessWidget {
-  Dot(this.isShow, this.color);
+  const Dot(this.isShow, this.color, {super.key});
+
   final bool isShow;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    return Container(
-      width: 6,
-      height: 6,
-      decoration: isShow ? BoxDecoration(
-        color: color,
-        shape: BoxShape.circle
-      ) : null,
+    return SizedBox(
+      width: 8,
+      height: 8,
+      child: DecoratedBox(
+        decoration: isShow
+            ? BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              )
+            : const BoxDecoration(),
+      ),
     );
   }
 }

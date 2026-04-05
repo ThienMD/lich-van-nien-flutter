@@ -1,7 +1,6 @@
 class EventVO {
-  EventVO( this.date, this.event);
+  const EventVO(this.date, this.event);
 
-  DateTime date;
-  String event;
-
+  final DateTime date;
+  final String event;
 }

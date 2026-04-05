@@ -1,36 +1,47 @@
 import 'package:flutter/material.dart';
 
+class SwipeDetector extends StatefulWidget {
+  const SwipeDetector({
+    super.key,
+    this.onSwipeLeft,
+    this.onSwipeRight,
+    required this.child,
+  });
 
-class SwipeDetector extends StatelessWidget {
-  @required SwipeDetector({this.onSwipeLeft, this.onSwipeRight, this.child});
-  final Function onSwipeLeft;
-  final Function onSwipeRight;
+  final VoidCallback? onSwipeLeft;
+  final VoidCallback? onSwipeRight;
   final Widget child;
-  var initialDrag = 0.0;
-  var distanceDrag = 0.0;
+
+  @override
+  State<SwipeDetector> createState() => _SwipeDetectorState();
+}
+
+class _SwipeDetectorState extends State<SwipeDetector> {
+  static const double _triggerOffset = 32;
+  double _initialDrag = 0;
+  double _distanceDrag = 0;
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return GestureDetector(
-      onPanStart: (details) {
-        initialDrag = details.globalPosition.dx;
+      behavior: HitTestBehavior.opaque,
+      onPanStart: (DragStartDetails details) {
+        _initialDrag = details.globalPosition.dx;
+        _distanceDrag = 0;
       },
       onPanUpdate: (DragUpdateDetails details) {
-        distanceDrag = details.globalPosition.dx - initialDrag;
+        _distanceDrag = details.globalPosition.dx - _initialDrag;
       },
-      onPanEnd: (DragEndDetails details) {
-        if (distanceDrag > 0) {
-          print('swipe right');
-          onSwipeLeft();
+      onPanEnd: (_) {
+        if (_distanceDrag <= -_triggerOffset) {
+          widget.onSwipeLeft?.call();
+        } else if (_distanceDrag >= _triggerOffset) {
+          widget.onSwipeRight?.call();
         }
-        if (distanceDrag < 0) {
-          print('swipe left');
-
-          onSwipeRight();
-        }
+        _initialDrag = 0;
+        _distanceDrag = 0;
       },
-      child: child,
+      child: widget.child,
     );
   }
 }

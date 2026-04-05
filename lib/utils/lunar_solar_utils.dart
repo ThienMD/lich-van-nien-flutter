@@ -329,8 +329,7 @@ getCanHour(jdn) {
 }
 
  getCanDay(jdn) {
-  var dayName, monthName, yearName;
-  dayName = CAN[(jdn + 9) % 10] + " " + CHI[(jdn+1)%12];
+  final dayName = CAN[(jdn + 9) % 10] + " " + CHI[(jdn+1)%12];
   return dayName;
 }
 

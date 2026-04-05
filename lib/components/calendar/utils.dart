@@ -15,8 +15,8 @@ DateTime lastDayOfMonth(DateTime date) {
   return new DateTime(date.year + 1, 1, 0);
 }
 
-lastDayOfPreviousMonth(DateTime date) {
-  return new DateTime(date.year, date.month, 0);
+DateTime lastDayOfPreviousMonth(DateTime date) {
+  return DateTime(date.year, date.month, 0);
 }
 
 DateTime increaseMonth(DateTime date) {
@@ -50,12 +50,11 @@ bool isOtherMonth(DateTime date, DateTime currentMonth) {
   return true;
 }
 
-bool equalDate(DateTime date1, DateTime date2) {
-  if(date1 == null || date2 == null) {
+bool equalDate(DateTime? date1, DateTime? date2) {
+  if (date1 == null || date2 == null) {
     return false;
   }
-  if(date1.year == date2.year && date1.month == date2.month && date1.day == date2.day) {
-    return true;
-  }
-  return false;
+  return date1.year == date2.year &&
+      date1.month == date2.month &&
+      date1.day == date2.day;
 }

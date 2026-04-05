@@ -1,204 +1,205 @@
-import 'package:flutter/material.dart';
-import 'package:calendar/components/calendar/day.dart';
-import 'package:calendar/components/calendar/utils.dart';
 import 'package:calendar/components/calendar/constants.dart';
-import 'package:calendar/components/calendar/header.dart';
+import 'package:calendar/components/calendar/day.dart';
 import 'package:calendar/components/calendar/day_of_week.dart';
-import 'package:calendar/model/EventVO.dart';
-import 'package:calendar/components/SwipeDetector.dart';
+import 'package:calendar/components/calendar/header.dart';
+import 'package:calendar/components/calendar/utils.dart';
+import 'package:flutter/material.dart';
 
 class Calendar extends StatefulWidget {
+  const Calendar({
+    super.key,
+    required this.markedDays,
+    required this.onDateTimeChanged,
+  });
+
   final List<DateTime> markedDays;
-  final Function onDateTimeChanged;
-  Calendar({this.markedDays, this.onDateTimeChanged});
+  final ValueChanged<DateTime> onDateTimeChanged;
 
   @override
-  State<StatefulWidget> createState() {
-    // TODO: implement createState
-    return _CalendarState(this.markedDays, this.onDateTimeChanged);
-  }
+  State<Calendar> createState() => _CalendarState();
 }
 
-class _CalendarState extends State<Calendar>  with TickerProviderStateMixin  {
-  _CalendarState(this.markedDays, this.onDateTimeChanged);
-  final Function onDateTimeChanged;
-  final List<DateTime> markedDays;
-  DateTime calendar = DateTime.now();
-  DateTime selectedDate;
+class _CalendarState extends State<Calendar> {
+  static const int _initialPage = 1200;
+  static const Duration _pageDuration = Duration(milliseconds: 260);
 
-  //animation
-  AnimationController _controller;
-  Animation<Offset> _offsetFloat;
-
+  late final PageController _pageController;
+  late final DateTime _baseMonth;
+  late int _currentPage;
+  late DateTime _calendar;
+  DateTime? _selectedDate;
+  late Set<String> _markedDayKeys;
 
   @override
   void initState() {
-    calendar = DateTime.now();
-
-    //animation
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-
-    _offsetFloat = Tween<Offset>(begin: Offset(1, 0.0), end: Offset.zero)
-        .animate(_controller);
-
-    _controller.forward();
+    super.initState();
+    _baseMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+    _calendar = _baseMonth;
+    _currentPage = _initialPage;
+    _pageController = PageController(initialPage: _initialPage, viewportFraction: 1);
+    _markedDayKeys = _buildMarkedDayKeys(widget.markedDays);
   }
 
-  Widget getDateOfWeekHeader(dayWidth) {
-    List<Widget> listDay = [];
-    for (int i = 0; i < days.length; i++) {
-      listDay.add(DayOfWeek(days[i], dayWidth));
+  @override
+  void didUpdateWidget(covariant Calendar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.markedDays != widget.markedDays) {
+      _markedDayKeys = _buildMarkedDayKeys(widget.markedDays);
     }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Set<String> _buildMarkedDayKeys(List<DateTime> dates) {
+    return dates.map(Day.dateKey).toSet();
+  }
+
+  DateTime _monthForPage(int page) {
+    final offset = page - _initialPage;
+    return DateTime(_baseMonth.year, _baseMonth.month + offset, 1);
+  }
+
+  List<DateTime> _daysForMonth(DateTime month) {
+    final start = firstDayOfWeek(DateTime(month.year, month.month, 1));
+    return List<DateTime>.generate(
+      42,
+      (int index) => start.add(Duration(days: index)),
+      growable: false,
+    );
+  }
+
+  Widget _buildDateOfWeekHeader(double dayWidth, double dayHeight) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: listDay,
+      children: days
+          .map(
+            (String item) => DayOfWeek(title: item, width: dayWidth),
+          )
+          .toList(growable: false),
     );
   }
 
-  Widget getMonthComponent(context) {
-    var width = MediaQuery.of(context).size.width;
-    var dayWidth = width / 7;
+  void _onPageChanged(int page) {
+    final nextMonth = _monthForPage(page);
+    setState(() {
+      _currentPage = page;
+      _calendar = nextMonth;
+    });
+    widget.onDateTimeChanged(nextMonth);
+  }
 
-    if (calendar == null) calendar = DateTime.now();
-    int year = calendar.year;
-    int month = calendar.month;
-    var lastDayMonth = lastDayOfMonth(calendar);
-    List<Widget> rowItems = [];
-    List<Widget> columnItems = [
-      getDateOfWeekHeader(dayWidth),
-    ];
-    var numItem = 0;
-    // first day of month
-    DateTime firstDayOfTheMonth = firstDayOfWeek(DateTime(year, month, 1));
-    if (firstDayOfTheMonth.day > 1) {
-      //previous month
-      DateTime lastDayPreMonth = lastDayOfPreviousMonth(calendar);
-      for (int i = firstDayOfTheMonth.day; i <= lastDayPreMonth.day; i++) {
-        numItem++;
-        Day day = Day(
-            width: dayWidth,
-            date: DateTime(firstDayOfTheMonth.year, firstDayOfTheMonth.month, i),
-            currentCalendar: calendar,
-            selectedDate: selectedDate,
-            onDayPress: onDayPress,
-            markedDays: markedDays);
-        rowItems.add(day);
-      }
-    }
-    for (int i = 1; i <= lastDayMonth.day; i++) {
-      //current month
-      numItem++;
-      Day day = Day(
-          width: dayWidth,
-          date: DateTime(calendar.year, calendar.month, i),
-          currentCalendar: calendar,
-          selectedDate: selectedDate,
-          onDayPress: onDayPress,
-          markedDays: markedDays);
-      rowItems.add(day);
-      if (numItem % 7 == 0) {
-        columnItems.add(Row(children: rowItems));
-        rowItems = [];
-      }
-    }
-    //next month
-    var endDayWeek =
-        endDayOfWeek(DateTime(calendar.year, calendar.month, lastDayMonth.day));
-    if (endDayWeek.day < 10) {
-      // have next month
-      for (int i = 1; i <= endDayWeek.day; i++) {
-        //current month
-        numItem++;
-        Day day = Day(
-            width: dayWidth,
-            date: DateTime(endDayWeek.year, endDayWeek.month, i),
-            currentCalendar: calendar,
-            selectedDate: selectedDate,
-            onDayPress: onDayPress,
-            markedDays: markedDays);
-        rowItems.add(day);
-        if (numItem % 7 == 0) {
-          columnItems.add(Row(children: rowItems));
-          rowItems = [];
-        }
-      }
-    }
-    if (rowItems.length > 0) {
-      columnItems.add(Row(children: rowItems));
-    }
-
-    return Container(
-      child: SlideTransition(
-        position: _offsetFloat,
-        child: SwipeDetector(
-            child: Column(children: columnItems),
-          onSwipeLeft: (){
-              this.onPreviousPress();
-          },
-          onSwipeRight: (){
-              this.onNextPress();
-          },
-        ),
-      ),
+  void _goToPreviousMonth() {
+    _pageController.previousPage(
+      duration: _pageDuration,
+      curve: Curves.easeOutQuart,
     );
   }
 
-  onDayPress(date) {
+  void _goToNextMonth() {
+    _pageController.nextPage(
+      duration: _pageDuration,
+      curve: Curves.easeOutQuart,
+    );
+  }
+
+  void _onDayPress(DateTime date) {
     setState(() {
-      selectedDate = date;
+      _selectedDate = date;
     });
-    if (isOtherMonth(date, calendar)) {
-      setState(() {
-        calendar = date;
-      });
+
+    final monthDelta = (date.year - _calendar.year) * 12 + date.month - _calendar.month;
+    if (monthDelta != 0) {
+      _pageController.animateToPage(
+        _currentPage + monthDelta,
+        duration: _pageDuration,
+        curve: Curves.easeOutQuart,
+      );
     }
   }
 
-  onPreviousPress() {
-    var newCalendar = decreaseMonth(calendar);
-    setState(() {
-      calendar = newCalendar;
-    });
-    onChangeMonth(newCalendar);
-    _offsetFloat = Tween<Offset>(begin: Offset(-1, 0.0), end: Offset.zero)
-        .animate(_controller);
-    _controller.value = 0.0;
-    _controller.forward();
-  }
+  Widget _buildMonthPage(BuildContext context, DateTime month) {
+    final daysInView = _daysForMonth(month);
 
-  onNextPress() {
-    var newCalendar = increaseMonth(calendar);
-    setState(() {
-      calendar = newCalendar;
-    });
-    onChangeMonth(newCalendar);
-    _offsetFloat = Tween<Offset>(begin: Offset(1, 0.0), end: Offset.zero)
-        .animate(_controller);
-    _controller.value = 0.0;
-    _controller.forward();
-  }
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final dayWidth = constraints.maxWidth / 7;
+        final headerHeight = (dayWidth * 0.55).clamp(28.0, 42.0);
+        final gridHeight = (constraints.maxHeight - headerHeight - 10).clamp(220.0, 420.0);
+        final dayHeight = gridHeight / 6;
 
-  onChangeMonth(DateTime newCalendar) {
-    onDateTimeChanged(newCalendar);
+        return RepaintBoundary(
+          child: Column(
+            children: <Widget>[
+              SizedBox(
+                height: headerHeight,
+                child: _buildDateOfWeekHeader(dayWidth, dayHeight),
+              ),
+              const SizedBox(height: 4),
+              ...List<Widget>.generate(6, (int weekIndex) {
+                final week = daysInView.sublist(weekIndex * 7, (weekIndex + 1) * 7);
+                return SizedBox(
+                  height: dayHeight,
+                  child: Row(
+                    children: week
+                        .map(
+                          (DateTime date) => Day(
+                            width: dayWidth,
+                            height: dayHeight,
+                            date: date,
+                            currentCalendar: month,
+                            selectedDate: _selectedDate,
+                            onDayPress: _onDayPress,
+                            markedDayKeys: _markedDayKeys,
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    return Container(
-      child: Column(
-        children: <Widget>[
-          Header(
-            currentMonth: calendar,
-            onPreviousPress: onPreviousPress,
-            onNextPress: onNextPress,
+    final width = MediaQuery.of(context).size.width;
+    final calendarHeight = width >= 1200 ? 420.0 : width >= 900 ? 380.0 : 320.0;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Header(
+          currentMonth: _calendar,
+          onPreviousPress: _goToPreviousMonth,
+          onNextPress: _goToNextMonth,
+        ),
+        SizedBox(
+          height: calendarHeight,
+          child: PageView.builder(
+            controller: _pageController,
+            padEnds: false,
+            onPageChanged: _onPageChanged,
+            itemBuilder: (BuildContext context, int index) {
+              final month = _monthForPage(index);
+              return AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                switchInCurve: Curves.easeOut,
+                child: Padding(
+                  key: ValueKey<String>('${month.year}-${month.month}'),
+                  padding: const EdgeInsets.only(top: 4),
+                  child: _buildMonthPage(context, month),
+                ),
+              );
+            },
           ),
-          getMonthComponent(context),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

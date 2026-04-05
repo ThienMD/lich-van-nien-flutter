@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 
 class StrokeText extends StatelessWidget {
+  const StrokeText(
+    this.text, {
+    super.key,
+    this.fontSize = 14,
+    this.fontWeight = FontWeight.w700,
+    this.color = Colors.white,
+    this.strokeColor = Colors.black,
+    this.strokeWidth = 1,
+  });
+
   final String text;
   final double fontSize;
   final FontWeight fontWeight;
@@ -8,20 +18,10 @@ class StrokeText extends StatelessWidget {
   final Color strokeColor;
   final double strokeWidth;
 
-  const StrokeText(
-      this.text, {
-        Key key,
-        this.fontSize,
-        this.fontWeight,
-        this.color,
-        this.strokeColor,
-        this.strokeWidth,
-      }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return Stack(
-      children: [
+      children: <Widget>[
         Text(
           text,
           style: TextStyle(

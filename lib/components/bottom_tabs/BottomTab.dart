@@ -1,37 +1,44 @@
 import 'package:flutter/material.dart';
-import 'TabItemData.dart';
 import 'TabItem.dart';
+import 'TabItemData.dart';
+
 class BottomTab extends StatelessWidget {
-  @required BottomTab({this.items, this.currentIndex, this.onTabTapped});
-  final List<TabItemData>items;
+  const BottomTab({
+    super.key,
+    required this.items,
+    required this.currentIndex,
+    required this.onTabTapped,
+  });
+
+  final List<TabItemData> items;
   final int currentIndex;
-  final Function onTabTapped;
+  final ValueChanged<int> onTabTapped;
+
   @override
   Widget build(BuildContext context) {
-    List<Widget> children = new List();
-     items.forEach((item) {
-      var tabItem = TabItem(
-        title: item.title,
-        image: item.image,
-        isSelected: item.index == currentIndex,
-        onPress: (){
-          onTabTapped(item.index);
-        },
-      );
-       children.add(tabItem);
-    });
+    final children = items
+        .map(
+          (item) => TabItem(
+            title: item.title,
+            image: item.image,
+            isSelected: item.index == currentIndex,
+            onPress: () => onTabTapped(item.index),
+          ),
+        )
+        .toList(growable: false);
+
     return Positioned(
       bottom: 0,
       right: 0,
       left: 0,
-      height: 60,
+      height: 74,
       child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.5)
+          color: Colors.black.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(18),
         ),
-        child: Row(
-          children: children
-        ),
+        child: Row(children: children),
       ),
     );
   }

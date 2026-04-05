@@ -2,25 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:calendar/components/calendar/constants.dart';
 
 class DayOfWeek extends StatelessWidget {
-  DayOfWeek(this.title, this.width);
+  const DayOfWeek({
+    super.key,
+    required this.title,
+    required this.width,
+  });
 
   final String title;
   final double width;
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    return Container(
+    return SizedBox(
       width: width,
-      height: width,
+      height: width * 0.72,
       child: Center(
-        child: Text(title.toUpperCase(),
-
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: DOW_TEXT_SIZE,
-                color: Colors.white,
-                fontWeight: FontWeight.bold)),
+        child: Text(
+          title.toUpperCase(),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: DOW_TEXT_SIZE,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+          ),
+        ),
       ),
     );
   }

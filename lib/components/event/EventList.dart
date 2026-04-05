@@ -1,25 +1,42 @@
-import 'package:flutter/material.dart';
-import 'EventItem.dart';
+import 'package:calendar/components/event/EventItem.dart';
 import 'package:calendar/model/EventVO.dart';
+import 'package:flutter/material.dart';
 
 class EventList extends StatelessWidget {
-  EventList({this.data});
-  final List<EventVO> data;
+  const EventList({
+    super.key,
+    required this.data,
+    required this.currentMonth,
+  });
 
-  Widget renderItem(EventVO event) {
-    return EventItem(event);
-  }
+  final List<EventVO> data;
+  final DateTime currentMonth;
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
+    if (data.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            'Không có sự kiện nổi bật trong tháng ${currentMonth.month}.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ),
+      );
+    }
 
-    return  ListView.builder(
+    return ListView.separated(
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      physics: const BouncingScrollPhysics(),
       itemCount: data.length,
-      itemBuilder: (context, int index) {
-        return renderItem(data[index]);
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (BuildContext context, int index) {
+        return EventItem(event: data[index]);
       },
     );
   }
-
 }

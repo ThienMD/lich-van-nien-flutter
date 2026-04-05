@@ -1,38 +1,41 @@
 import 'package:flutter/material.dart';
 
 class TabItem extends StatelessWidget {
-  TabItem({this.title, this.image, this.isSelected, this.onPress});
+  const TabItem({
+    super.key,
+    required this.title,
+    required this.image,
+    required this.isSelected,
+    required this.onPress,
+  });
+
   final bool isSelected;
   final String title;
   final String image;
-  final Function onPress;
-  var unSelectColor = Colors.white30;
-  var selectedColor = Colors.white;
+  final VoidCallback onPress;
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    var iconColor = isSelected ? selectedColor : unSelectColor;
-    var textStyle = TextStyle(
-      color: isSelected ? selectedColor : unSelectColor,
-      fontSize: 12
+    final iconColor = isSelected ? Colors.white : Colors.white54;
+    final textStyle = TextStyle(
+      color: iconColor,
+      fontSize: 12,
+      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
     );
+
     return Expanded(
-      child: GestureDetector(
+      child: InkWell(
         onTap: onPress,
+        borderRadius: BorderRadius.circular(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Image(image: AssetImage(image), width: 30, height: 30, color: iconColor,),
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(title, style: textStyle),
-            )
+            Image.asset(image, width: 26, height: 26, color: iconColor),
+            const SizedBox(height: 4),
+            Text(title, style: textStyle),
           ],
         ),
       ),
     );
   }
-
 }
