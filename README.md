@@ -138,7 +138,7 @@ Deployment is automated via GitHub Actions on every push to `main`.
 
 2. **Enable GitHub Pages** — go to **Settings → Pages**, set Source to **GitHub Actions**.
 
-3. Push to `main` — the workflow at `.github/workflows/deploy.yml` will:
+3. Push to `master` — the workflow at `.github/workflows/deploy.yml` will:
    - Run `flutter analyze` and `flutter test`
    - Build the web app with `--base-href /lich-van-nien-flutter/`
    - Deploy to `https://thienmd.github.io/lich-van-nien-flutter/`
