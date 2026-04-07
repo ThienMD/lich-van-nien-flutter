@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:calendar/components/select_date_button.dart';
 import 'package:calendar/components/stroke_text.dart';
 import 'package:calendar/components/swipe_detector.dart';
 import 'package:calendar/model/quote_vo.dart';
@@ -157,41 +156,6 @@ class _SingleDayContainerState extends State<SingleDayContainer>
         _selectedDate.hour,
         _selectedDate.minute,
       ),
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context, {required bool onImage}) {
-    final title = 'Tháng ${_selectedDate.month} • ${_selectedDate.year}';
-    final colorScheme = Theme.of(context).colorScheme;
-    final foregroundColor = onImage ? Colors.white : colorScheme.onSurface;
-    final backgroundColor = onImage
-        ? Colors.white.withValues(alpha: 0.14)
-        : colorScheme.surfaceContainerHighest;
-    final borderColor = onImage ? Colors.white.withValues(alpha: 0.24) : colorScheme.outlineVariant;
-
-    return Wrap(
-      alignment: WrapAlignment.spaceBetween,
-      runAlignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 12,
-      runSpacing: 10,
-      children: <Widget>[
-        FilledButton.tonal(
-          onPressed: () => _setSelectedDate(DateTime.now()),
-          style: FilledButton.styleFrom(
-            backgroundColor: backgroundColor,
-            foregroundColor: foregroundColor,
-          ),
-          child: const Text('Hôm nay'),
-        ),
-        SelectDateButton(
-          title: title,
-          onPress: () => _showDatePicker(context),
-          foregroundColor: foregroundColor,
-          backgroundColor: backgroundColor,
-          borderColor: borderColor,
-        ),
-      ],
     );
   }
 
@@ -440,170 +404,6 @@ class _SingleDayContainerState extends State<SingleDayContainer>
     );
   }
 
-  Widget _buildQuoteCard(
-    BuildContext context,
-    QuoteVO quote, {
-    required bool onLightSurface,
-    EdgeInsetsGeometry margin = EdgeInsets.zero,
-  }) {
-    if (quote.content.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final textColor = onLightSurface ? const Color(0xFF182230) : Colors.white;
-    final secondaryColor = onLightSurface ? const Color(0xFF5B6473) : Colors.white70;
-
-    return Container(
-      margin: margin,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: onLightSurface ? Colors.white : Colors.white.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: onLightSurface
-              ? const Color(0xFFDCE4F0)
-              : Colors.white.withValues(alpha: 0.10),
-        ),
-        boxShadow: onLightSurface
-            ? <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ]
-            : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            quote.content,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 16,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              quote.author,
-              style: TextStyle(
-                color: secondaryColor,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoBox(
-    BuildContext context,
-    String label,
-    String value,
-    String caption, {
-    bool hasBorder = true,
-    required bool onLightSurface,
-  }) {
-    final labelColor = onLightSurface ? const Color(0xFF6B7280) : Colors.white70;
-    final valueColor = onLightSurface ? const Color(0xFF101828) : Colors.white;
-
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(
-          border: Border(
-            right: BorderSide(
-              color: hasBorder
-                  ? (onLightSurface ? const Color(0xFFDCE4F0) : Colors.white12)
-                  : Colors.transparent,
-            ),
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(label, style: TextStyle(color: labelColor, fontSize: 12)),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: TextStyle(
-                color: valueColor,
-                fontWeight: FontWeight.w800,
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              caption,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: labelColor, fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDateInfo(
-    BuildContext context, {
-    required bool onLightSurface,
-    EdgeInsetsGeometry? margin,
-  }) {
-    final hourMinute =
-        '${_selectedDate.hour.toString().padLeft(2, '0')}:${_selectedDate.minute.toString().padLeft(2, '0')}';
-    final lunarDates =
-        convertSolar2Lunar(_selectedDate.day, _selectedDate.month, _selectedDate.year, 7);
-    final lunarDay = lunarDates[0];
-    final lunarMonth = lunarDates[1];
-    final lunarYear = lunarDates[2];
-    final lunarMonthName = getCanChiMonth(lunarMonth, lunarYear);
-    final jd = jdn(_selectedDate.day, _selectedDate.month, _selectedDate.year);
-    final dayName = getCanDay(jd);
-    final beginHourName = getBeginHour(jd);
-
-    return Container(
-      margin: margin ?? EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).viewPadding.bottom + 72),
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        color: onLightSurface ? Colors.white : Colors.black.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: onLightSurface
-              ? const Color(0xFFDCE4F0)
-              : Colors.white.withValues(alpha: 0.08),
-        ),
-        boxShadow: onLightSurface
-            ? <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ]
-            : null,
-      ),
-      child: Row(
-        children: <Widget>[
-          _infoBox(context, 'Giờ đầu', hourMinute, beginHourName, onLightSurface: onLightSurface),
-          _infoBox(context, 'Ngày', '$lunarDay', dayName, onLightSurface: onLightSurface),
-          _infoBox(
-            context,
-            'Tháng (Lunar)',
-            '$lunarMonth',
-            lunarMonthName,
-            hasBorder: false,
-            onLightSurface: onLightSurface,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDesktopLayout(
     BuildContext context,
     QuoteVO quote,
@@ -611,6 +411,15 @@ class _SingleDayContainerState extends State<SingleDayContainer>
     int backgroundIndex,
     BoxConstraints constraints,
   ) {
+    final lunarDates = convertSolar2Lunar(_selectedDate.day, _selectedDate.month, _selectedDate.year, 7);
+    final lunarDay = lunarDates[0] as int;
+    final lunarMonth = lunarDates[1] as int;
+    final lunarYear = lunarDates[2] as int;
+    final jd = jdn(_selectedDate.day, _selectedDate.month, _selectedDate.year);
+    final dayName = getCanDay(jd);
+    final lunarMonthName = getCanChiMonth(lunarMonth, lunarYear);
+    final yearName = _lunarYearName(lunarYear);
+
     final shellColor = widget.useGlassTheme
         ? Colors.white.withValues(alpha: 0.06)
         : Colors.white.withValues(alpha: 0.96);
@@ -684,7 +493,6 @@ class _SingleDayContainerState extends State<SingleDayContainer>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              _buildActionButtons(context, onImage: true),
                               const Spacer(),
                               Align(
                                 alignment: Alignment.center,
@@ -735,25 +543,51 @@ class _SingleDayContainerState extends State<SingleDayContainer>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text(
-                            'Today overview',
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                  color: const Color(0xFF6B7280),
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                          const SizedBox(height: 8),
+                          _buildProfileHeader(context),
+                          const SizedBox(height: 14),
                           Expanded(
                             child: SingleChildScrollView(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
-                                  _buildQuoteCard(context, quote, onLightSurface: true),
-                                  const SizedBox(height: 18),
-                                  _buildDateInfo(
-                                    context,
-                                    onLightSurface: true,
-                                    margin: EdgeInsets.zero,
+                                  _buildPaperQuoteCard(context, quote),
+                                  const SizedBox(height: 14),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.88),
+                                      borderRadius: BorderRadius.circular(28),
+                                      border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+                                      boxShadow: <BoxShadow>[
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.05),
+                                          blurRadius: 18,
+                                          offset: const Offset(0, 10),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      children: <Widget>[
+                                        _buildPaperFactTile(
+                                          label: 'Ngày',
+                                          value: '$lunarDay',
+                                          caption: '${_animalEmoji(dayName)} $dayName',
+                                          emphasize: true,
+                                        ),
+                                        _buildPaperFactTile(
+                                          label: 'Tháng',
+                                          value: '$lunarMonth',
+                                          caption: '${_animalEmoji(lunarMonthName)} $lunarMonthName',
+                                        ),
+                                        _buildPaperFactTile(
+                                          label: 'Năm',
+                                          value: '${_selectedDate.year}',
+                                          caption: '${_animalEmoji(yearName)} $yearName',
+                                          showDivider: false,
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
